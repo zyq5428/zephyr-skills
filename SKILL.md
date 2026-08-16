@@ -96,11 +96,16 @@ cd /home/hero/zephyrproject && source .venv/bin/activate && west build -p always
 # 烧录（默认 runner = Linkserver，板载 MCU-Link 调试器）
 west flash
 
-# 串口监视（控制台在 Flexcomm4，通常 /dev/ttyACM0 或 /dev/ttyUSB0）
+# ★ 串口监视（已验证 SOP）：控制台在 Flexcomm4，用 by-id 通配符路径 + grabserial
+grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
+
+# 备选：miniterm 交互式监视（/dev/ttyACM0 或 /dev/ttyUSB0 以 ls 为准）
 python -m serial.tools.miniterm /dev/ttyACM0 115200
 ```
 
 > 注意：MCX-N947 是**双核** SoC；CPU1 不能独立运行，必须由 CPU0 经 sysbuild 启动。
+>
+> ✅ 2026-08-16 已实测验证：blinky 全流程（build → `west flash` linkserver v26.6.137 → grabserial）一次通过，串口输出 `LED state: ON/OFF` 交替。
 
 ### Espressif — ESP32-S3 DevKitC-1（详见 board-esp32s3-devkitc.md）
 

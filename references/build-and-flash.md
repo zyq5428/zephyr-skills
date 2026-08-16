@@ -26,7 +26,7 @@ west --version
 
 | 厂商 | 代表构建目标 | 烧录 runner | 烧录命令 | 串口监视命令 |
 |------|--------------|-------------|----------|--------------|
-| NXP | `frdm_mcxn947/mcxn947/cpu0` | linkserver（板载 MCU-Link） | `west flash` | `python -m serial.tools.miniterm /dev/ttyACM0 115200` |
+| NXP | `frdm_mcxn947/mcxn947/cpu0` | linkserver（板载 MCU-Link） | `west flash` | `grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5` |
 | Espressif | `esp32s3_devkitc/esp32s3/procpu` | esptool | `west flash --esp-device /dev/ttyUSB0` | `west espressif monitor -p /dev/ttyUSB0` |
 | ST | `nucleo_f103rb` 等 | ★ pyocd（stm32cubeprogrammer 本机未装） | `west flash --runner pyocd` | `python -m serial.tools.miniterm /dev/ttyACM0 115200` |
 
@@ -107,7 +107,10 @@ west flash                                    # 默认 runner 为 stm32cubeprogr
 ## 5. 串口监视
 
 ```bash
-# 通用（NXP / ST）
+# ★ NXP — FRDM-MCXN947 首选（已验证）：by-id 通配符 + grabserial，-e 5 = 抓取 5 秒后退出
+grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
+
+# 通用（NXP / ST）备选：miniterm 交互式监视
 python -m serial.tools.miniterm /dev/ttyACM0 115200
 
 # ESP32 专用监视器
@@ -116,6 +119,11 @@ west espressif monitor -p /dev/ttyUSB0
 # 保存日志到文件
 script -c "python -m serial.tools.miniterm /dev/ttyACM0 115200" serial.log
 ```
+
+> NXP 串口实际设备名（2026-08-16 实测）：
+> `/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947__r0E7__CMSIS-DAP_V3.167_3XZJU0NSIRNEO-if02`
+> 用 `usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*` 通配符即可稳定匹配，无需记完整序列号。
+> blinky 验证输出：`LED state: ON / OFF` 交替（1Hz）。
 
 ### 串口输出示例
 

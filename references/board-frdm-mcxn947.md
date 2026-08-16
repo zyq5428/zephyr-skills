@@ -74,7 +74,7 @@
 | 默认 runner | Linkserver（`west flash` 直接使用） |
 | 备用 runner | pyocd / jlink |
 | USB 接口 | Type-C（MCU-Link 调试口） |
-| 虚拟串口 | `/dev/ttyACM0` 或 `/dev/ttyUSB0`（实际以 ls 为准） |
+| 虚拟串口 | ★ `/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*`（实测有效，`-if02` 接口为虚拟 COM 口；也可用 `/dev/ttyACM0`） |
 
 ## 8. 支持的 Shields
 
@@ -90,7 +90,9 @@ cd /home/hero/zephyrproject && source .venv/bin/activate && west build -p always
 # 烧录
 west flash
 
-# 串口
+# 串口（★ 已验证 SOP：by-id 通配符 + grabserial，-e 5 = 抓 5 秒退出）
+grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
+# 备选：交互式监视
 python -m serial.tools.miniterm /dev/ttyACM0 115200
 
 # 查看板级设备树
