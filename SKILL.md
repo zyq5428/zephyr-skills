@@ -100,16 +100,10 @@ west flash
 # ⚠️ 注意：grabserial 逐字节 decode("utf8","ignore")，会丢弃所有非 ASCII 字节（中文乱码/消失）
 grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
 
-# ★★ 输出含中文/UTF-8 时必须用 pyserial 原始读取（grabserial 会吞掉中文字节）：
-#    例：抓 5 秒
-python3 -c "
-import serial, glob, time
-s = serial.Serial(glob.glob('/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*')[0], 115200)
-t0 = time.time()
-while time.time() - t0 < 5:
-    d = s.read(4096)
-    if d: print(d.decode('utf-8', 'replace'), end='', flush=True)
-"
+# ★★ 输出含中文/UTF-8 时必须用技能自带工具 tools/serial_monitor.py（grabserial 会吞掉中文字节）：
+#    grabserial 平替：字节透明，参数对齐（-d 支持通配符 / -b 波特率 / -e 秒数退出 / -o 存原始日志）
+/home/hero/zephyrproject/.venv/bin/python3 ~/.claude/skills/zephyr-skill/tools/serial_monitor.py \
+    -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
 
 # 备选：miniterm 交互式监视（/dev/ttyACM0 或 /dev/ttyUSB0 以 ls 为准）
 python -m serial.tools.miniterm /dev/ttyACM0 115200

@@ -110,15 +110,10 @@ west flash                                    # 默认 runner 为 stm32cubeprogr
 # ★ NXP — FRDM-MCXN947 首选（已验证）：by-id 通配符 + grabserial，-e 5 = 抓取 5 秒后退出
 grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
 
-# ★★ 输出含中文/UTF-8 时必须用 pyserial（grabserial 会丢弃非 ASCII 字节，见下方警告）
-python3 -c "
-import serial, glob, time
-s = serial.Serial(glob.glob('/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*')[0], 115200)
-t0 = time.time()
-while time.time() - t0 < 5:      # 抓 5 秒
-    d = s.read(4096)
-    if d: print(d.decode('utf-8', 'replace'), end='', flush=True)
-"
+# ★★ 输出含中文/UTF-8 时必须用技能自带工具 tools/serial_monitor.py（grabserial 平替，字节透明）
+/home/hero/zephyrproject/.venv/bin/python3 ~/.claude/skills/zephyr-skill/tools/serial_monitor.py \
+    -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
+#   参数: -d 设备(支持通配符) / -b 波特率(默认115200) / -e 抓 N 秒后退出 / -o 同时存原始字节日志
 
 # 通用（NXP / ST）备选：miniterm 交互式监视
 python -m serial.tools.miniterm /dev/ttyACM0 115200

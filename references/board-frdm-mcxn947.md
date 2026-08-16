@@ -92,15 +92,9 @@ west flash
 
 # 串口（★ 已验证 SOP：by-id 通配符 + grabserial，-e 5 = 抓 5 秒退出）
 grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
-# ⚠️ 中文/UTF-8 输出必须用 pyserial（grabserial 会吞掉非 ASCII 字节）：
-python3 -c "
-import serial, glob, time
-s = serial.Serial(glob.glob('/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*')[0], 115200)
-t0 = time.time()
-while time.time() - t0 < 5:
-    d = s.read(4096)
-    if d: print(d.decode('utf-8', 'replace'), end='', flush=True)
-"
+# ⚠️ 中文/UTF-8 输出用技能自带工具 tools/serial_monitor.py（grabserial 平替，字节透明）
+/home/hero/zephyrproject/.venv/bin/python3 ~/.claude/skills/zephyr-skill/tools/serial_monitor.py \
+    -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
 # 备选：交互式监视
 python -m serial.tools.miniterm /dev/ttyACM0 115200
 
