@@ -97,7 +97,19 @@ cd /home/hero/zephyrproject && source .venv/bin/activate && west build -p always
 west flash
 
 # ★ 串口监视（已验证 SOP）：控制台在 Flexcomm4，用 by-id 通配符路径 + grabserial
+# ⚠️ 注意：grabserial 逐字节 decode("utf8","ignore")，会丢弃所有非 ASCII 字节（中文乱码/消失）
 grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
+
+# ★★ 输出含中文/UTF-8 时必须用 pyserial 原始读取（grabserial 会吞掉中文字节）：
+#    例：抓 5 秒
+python3 -c "
+import serial, glob, time
+s = serial.Serial(glob.glob('/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*')[0], 115200)
+t0 = time.time()
+while time.time() - t0 < 5:
+    d = s.read(4096)
+    if d: print(d.decode('utf-8', 'replace'), end='', flush=True)
+"
 
 # 备选：miniterm 交互式监视（/dev/ttyACM0 或 /dev/ttyUSB0 以 ls 为准）
 python -m serial.tools.miniterm /dev/ttyACM0 115200
@@ -106,6 +118,8 @@ python -m serial.tools.miniterm /dev/ttyACM0 115200
 > 注意：MCX-N947 是**双核** SoC；CPU1 不能独立运行，必须由 CPU0 经 sysbuild 启动。
 >
 > ✅ 2026-08-16 已实测验证：blinky 全流程（build → `west flash` linkserver v26.6.137 → grabserial）一次通过，串口输出 `LED state: ON/OFF` 交替。
+> ⚠️ 2026-08-16 排查实录：`LOG_INF` 中文输出"丢失"实为 **grabserial 的 bug**（逐字节 `decode("utf8","ignore")` 丢弃非 ASCII 字节），应用/驱动/UART 全链路无问题；用 pyserial 验证中文完整。
+> ⚠️ 已知现象：`west flash`（linkserver runner，reset=False）烧录后 LinkServer 会让应用**连续启动两次**（两次 boot banner，中间夹一个 NUL 字节）——属正常现象，不影响运行；若板子停在 flash driver 自旋（PC 停在 SRAM），用 gdb 加载 ELF 后 `continue` 即可运行应用。
 
 ### Espressif — ESP32-S3 DevKitC-1（详见 board-esp32s3-devkitc.md）
 

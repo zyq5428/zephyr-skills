@@ -110,6 +110,16 @@ west flash                                    # 默认 runner 为 stm32cubeprogr
 # ★ NXP — FRDM-MCXN947 首选（已验证）：by-id 通配符 + grabserial，-e 5 = 抓取 5 秒后退出
 grabserial -d /dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947* -b 115200 -e 5
 
+# ★★ 输出含中文/UTF-8 时必须用 pyserial（grabserial 会丢弃非 ASCII 字节，见下方警告）
+python3 -c "
+import serial, glob, time
+s = serial.Serial(glob.glob('/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*')[0], 115200)
+t0 = time.time()
+while time.time() - t0 < 5:      # 抓 5 秒
+    d = s.read(4096)
+    if d: print(d.decode('utf-8', 'replace'), end='', flush=True)
+"
+
 # 通用（NXP / ST）备选：miniterm 交互式监视
 python -m serial.tools.miniterm /dev/ttyACM0 115200
 
@@ -120,6 +130,14 @@ west espressif monitor -p /dev/ttyUSB0
 script -c "python -m serial.tools.miniterm /dev/ttyACM0 115200" serial.log
 ```
 
+> ⚠️ **grabserial UTF-8 缺陷（2026-08-16 实测定位）**：grabserial 逐字节 `sd.read(1)` + `x.decode("utf8", "ignore")`，
+> 任何多字节 UTF-8 字符（中文）的每个字节单独解码都非法 → 被 `ignore` 静默丢弃；ASCII 不受影响。
+> **症状**：日志里中文消失（如 `应用启动完成,` 只显示 `, Board: ...`），其余正常 —— 不是板卡/应用问题！
+> **对策**：需要中文输出时改用上面 pyserial 原始读取，字节完全无损（已验证）。
+>
+> ⚠️ **双启动现象**：`west flash` 后 LinkServer 会运行应用两次（两个 boot banner，中间一个 NUL 字节）——
+> 属 linkserver 正常行为（runner reset=False，应用由 flash driver 跳转运行）。不影响功能。
+>
 > NXP 串口实际设备名（2026-08-16 实测）：
 > `/dev/serial/by-id/usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947__r0E7__CMSIS-DAP_V3.167_3XZJU0NSIRNEO-if02`
 > 用 `usb-NXP_Semiconductors_MCU-LINK_FRDM-MCXN947*` 通配符即可稳定匹配，无需记完整序列号。
